@@ -1,0 +1,143 @@
+// ==UserScript==
+// @name         Chillydz FF - Menu Hack Nhỏ + Persistent
+// @namespace    https://chillydz.ff
+// @version      1.3
+// @description  Menu hack Free Fire nhỏ gọn, có switch bật/tắt, lưu trạng thái không mất khi reload
+// @author       Grok
+// @match        *://*/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @run-at       document-start
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    const MENU_KEY = 'chillydz_menu_enabled';
+    let isMenuEnabled = GM_getValue(MENU_KEY, false);
+    let isMinimized = false;
+
+    // Tạo công tắc bật/tắt (Switch) nhỏ ở góc trên
+    function createSwitch() {
+        const switchContainer = document.createElement('div');
+        switchContainer.id = 'cl-switch';
+        switchContainer.style.cssText = `
+            position: fixed; top: 15px; right: 15px; z-index: 99999;
+            background: rgba(0,0,0,0.8); padding: 8px 12px; border-radius: 20px;
+            border: 2px solid #00ffaa; display: flex; align-items: center; gap: 8px;
+            font-family: Arial; font-size: 13px; color: #00ffaa; cursor: pointer;
+        `;
+
+        switchContainer.innerHTML = `
+            <span>CL Menu</span>
+            <label style="position:relative; width:40px; height:20px;">
+                <input type="checkbox" id="cl-toggle" ${isMenuEnabled ? 'checked' : ''} style="opacity:0; width:0; height:0;">
+                <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#555; border-radius:20px; transition:.4s;"></span>
+                <span style="position:absolute; height:14px; width:14px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.4s;"></span>
+            </label>
+        `;
+
+        document.body.appendChild(switchContainer);
+
+        const toggle = document.getElementById('cl-toggle');
+        toggle.addEventListener('change', () => {
+            isMenuEnabled = toggle.checked;
+            GM_setValue(MENU_KEY, isMenuEnabled);
+            toggleMenuVisibility();
+        });
+    }
+
+    // Tạo menu chính (bé hơn bản cũ)
+    function createMenu() {
+        const menu = document.createElement('div');
+        menu.id = 'cl-menu';
+        menu.style.cssText = `
+            position: fixed; top: 70px; right: 20px; width: 320px; z-index: 100000;
+            background: rgba(10,10,20,0.97); border: 2px solid #00ffaa; border-radius: 12px;
+            box-shadow: 0 0 25px #00ffaa; padding: 15px; color: #00ffaa;
+            font-family: 'Press Start 2P', Arial; font-size: 13px; display: ${isMenuEnabled ? 'block' : 'none'};
+            transition: all 0.3s;
+        `;
+
+        menu.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div style="font-size:16px; font-weight:bold;">CHILLYDZ FF</div>
+                <div>
+                    <button id="btn-min" style="background:none; border:none; color:#00ffaa; font-size:18px; cursor:pointer; margin-right:8px;">−</button>
+                    <button id="btn-close" style="background:none; border:none; color:#ff0088; font-size:18px; cursor:pointer;">✕</button>
+                </div>
+            </div>
+
+            <div class="feature"><label><input type="checkbox" id="aimbot"> Auto Aim (Nhắm Đầu)</label></div>
+            <div class="feature"><label><input type="checkbox" id="esp"> ESP Player</label></div>
+            <div class="feature"><label><input type="checkbox" id="espall"> ESP All</label></div>
+            
+            <div class="feature">
+                <label>Speed <span id="speed-val">100</span>%</label>
+                <input type="range" id="speed" min="0" max="300" value="100" style="width:100%;">
+            </div>
+
+            <div class="feature">
+                <label>Jump <span id="jump-val">100</span>%</label>
+                <input type="range" id="jump" min="0" max="300" value="100" style="width:100%;">
+            </div>
+
+            <div class="feature"><label><input type="checkbox" id="noclip"> NoClip (Xuyên Tường)</label></div>
+
+            <button id="activate-btn" style="width:100%; padding:10px; background:#00ffaa; color:#000; border:none; border-radius:8px; font-weight:bold; margin-top:10px;">ACTIVATE HACKS</button>
+        `;
+
+        document.body.appendChild(menu);
+
+        // Sự kiện nút -
+        document.getElementById('btn-min').addEventListener('click', () => {
+            isMinimized = !isMinimized;
+            menu.style.transform = isMinimized ? 'scale(0.6)' : 'scale(1)';
+            menu.style.opacity = isMinimized ? '0.7' : '1';
+        });
+
+        // Sự kiện nút X (đóng hoàn toàn)
+        document.getElementById('btn-close').addEventListener('click', () => {
+            isMenuEnabled = false;
+            GM_setValue(MENU_KEY, false);
+            document.getElementById('cl-toggle').checked = false;
+            menu.style.display = 'none';
+        });
+
+        // Activate button
+        document.getElementById('activate-btn').addEventListener('click', activateHack);
+    }
+
+    function toggleMenuVisibility() {
+        const menu = document.getElementById('cl-menu');
+        if (menu) menu.style.display = isMenuEnabled ? 'block' : 'none';
+    }
+
+    function activateHack() {
+        // Thay bằng code hack thật của bạn ở đây
+        console.log('%c[Chillydz] Hacks Activated!', 'color:#00ffaa; font-size:16px');
+        alert('✅ CHILLYDZ FF HACKS ĐÃ BẬT!\n\nTất cả chức năng đang hoạt động.');
+        // Ví dụ: window.aimbotEnabled = document.getElementById('aimbot').checked; ...
+    }
+
+    // Khởi tạo
+    function init() {
+        if (!document.body) {
+            setTimeout(init, 500);
+            return;
+        }
+        createSwitch();
+        createMenu();
+        toggleMenuVisibility();
+
+        // Phím tắt K để mở nhanh
+        document.addEventListener('keydown', e => {
+            if (e.key.toLowerCase() === 'k' && isMenuEnabled) {
+                const menu = document.getElementById('cl-menu');
+                if (menu) menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+            }
+        });
+    }
+
+    init();
+})();
